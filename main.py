@@ -29,7 +29,7 @@ class GetDataListByBS4(Thread):
         for i in range(10):
             hrefdata = []
             # 构造访问请求
-            req = urllib.request.Request(target+str(3), headers=headers)
+            req = urllib.request.Request(target+str(i), headers=headers)
             html = opener.open(req).read().decode('utf-8')
             # print(html)
             soup = BeautifulSoup(html, "html5lib")
@@ -39,7 +39,6 @@ class GetDataListByBS4(Thread):
                 if hospital:
                     for each in hospital:
                         url = each.find(name='a')['href']
-                        print(url)
                         self.queue.put(url)
 
 class GetmedicineInfo(Thread):
@@ -49,6 +48,7 @@ class GetmedicineInfo(Thread):
 
     def run(self) :
         while True:
+            medicine_info = ''
             info_url = self.queue.get()
             url = (target1 + str(info_url))
             req = urllib.request.Request(url, headers=headers)
@@ -59,9 +59,16 @@ class GetmedicineInfo(Thread):
                 hospital = table.find_all(name='tr')
                 if hospital:
                     for each in hospital:
-                        hospitalTitle = each.find(name='span').get_text().strip()
-                        print(hospitalTitle.split(" ")[-1])
-            print("-----" + str(1) + "--------")
+                        hospital = each.find(name='span').get_text().strip()
+                        if(len(hospital.split("  "))>1) :
+
+                            info = ''.join(hospital.split("  ")[1:])
+                            info = info.replace('\n', '').replace('\t', '')
+                            medicine_info += info.strip()+'|'
+                            continue
+                        medicine_info += hospital + '|'
+
+            print(medicine_info)
             self.queue.task_done()
 
 if __name__ == "__main__":
