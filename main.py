@@ -34,12 +34,22 @@ class GetDataListByBS4(Thread):
             # print(html)
             soup = BeautifulSoup(html, "html5lib")
             table = soup.find(name='table', class_="table").find(name='tbody')
+            first = 0
             if table:
-                hospital = table.find_all(name='tr')
-                if hospital:
-                    for each in hospital:
-                        url = each.find(name='a')['href']
-                        self.queue.put(url)
+                hospital_tr = table.find_all(name='tr')
+                for hospital in hospital_tr:
+                    medicine_info = ''
+                    for each in hospital.find_all(name='td'):
+                        if(first == 0) :
+                            url = each.find(name='a')['href']
+                            medicine_info += each.find(name='a').get_text() + '|'
+                            self.queue.put(url)
+                            first += 1
+                            continue
+                        first += 1
+                        medicine_info += each.get_text() + '|'
+                    print(medicine_info)
+
 
 class GetmedicineInfo(Thread):
     def __init__(self, queue):
@@ -102,10 +112,10 @@ if __name__ == "__main__":
     queue = Queue()
 
     medicine_url_GET = GetDataListByBS4(queue)
-    medicine_info_url_GET = GetmedicineInfo(queue)
+    # medicine_info_url_GET = GetmedicineInfo(queue)
 
     medicine_url_GET.start()
-    medicine_info_url_GET.start()
+    # medicine_info_url_GET.start()
 
-    medicine_info_url_GET.join()
+    # medicine_info_url_GET.join()
     medicine_url_GET.join()
